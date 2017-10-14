@@ -11,7 +11,7 @@ install() {
     tools/with_venv.sh python setup.py develop	
 
     # install proxy
-    cd $COCO_PATH/install
+    cd $COCO_PATH
     cp coco.sh /etc/profile.d/
 }
 
