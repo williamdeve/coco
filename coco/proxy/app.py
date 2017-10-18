@@ -19,11 +19,14 @@ from datetime import datetime
 import pexpect
 from oslo_config import cfg
 from osmo.basic import Basic
+from oslo_log import log as logging
 
 import coco.util.common as cm
 from coco.util.service import CocoService
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+LOG = logging.getLogger(__name__)
 
 record_opts = [
     cfg.StrOpt('record_path',
@@ -79,7 +82,8 @@ class Proxy(Basic):
                 continue
             try:
                 self.interactive_handle(option)
-            except:
+            except Exception as _ex:
+                LOG.error('*** interactive handle error: %s' % str(_ex))
                 self.screen_clear()
                 self.show_nav()
                 continue
