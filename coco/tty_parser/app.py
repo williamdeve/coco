@@ -23,11 +23,15 @@ class SSHIOParser(object):
         self.ps1_pattern = re.compile(r'^\[?.*@.*\]?[\$#]\s|mysql>\s')
 
     def tty_parser(self, data):
-        if not isinstance(data, bytes):
-            data = data.encode('utf-8', errors='ignore')
-        self.stream.feed(data)
-        display_list = [line for line in self.screen.display if line.strip()]
-        self.screen.reset()
+        display_list = []
+        try:
+            if not isinstance(data, bytes):
+                data = data.encode('utf-8', errors='ignore')
+            self.stream.feed(data)
+            display_list = [line for line in self.screen.display if line.strip()]
+            self.screen.reset()
+        except Exception as _ex:
+            print ('tty parser error: %s' % str(_ex))
         return display_list
 
     def tty_input_parser(self, data):

@@ -11,8 +11,8 @@ import select
 import threading
 
 import paramiko
-from oslo_log import log as logging
 from oslo_config import cfg
+from oslo_log import log as logging
 
 import coco.util.common as cm
 from coco.util.service import CocoService
