@@ -59,7 +59,7 @@ class SSHProxy(threading.Thread):
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.client_channel.sendall(
-            cm.ws('......Connecting to relay: %s' % self.ip))
+            cm.ws('......Connecting to relay %s, please wait.\r\n' % self.ip))
         try:
             ssh_client.connect(self.ip, username=self.username,
                                password=self.password, allow_agent=True,
@@ -144,11 +144,11 @@ class SSHProxy(threading.Thread):
         if self.client_channel == self.context.channel_list[0]:
             for chan in self.context.channel_list:
                 chan.close()
-            self.context.trans.atfork()
+            self.context.transport.atfork()
         else:
             self.context.channel_list.remove(self.client_channel)
-        try:
             self.client_channel.close()
+        try:
             backend_channel.close()
         except:
             pass

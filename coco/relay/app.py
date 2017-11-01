@@ -53,27 +53,27 @@ def SSHBootstrap(client, rhost, ip):
     context.channel_list = []
     context.remote_host = rhost
 
-    trans = paramiko.Transport(client, gss_kex=False)
+    transport = paramiko.Transport(client, gss_kex=False)
     try:
-        trans.load_server_moduli()
+        transport.load_server_moduli()
     except:
         LOG.error('(Failed to load moduli -- gex will be unsupported.)')
         client.close()
         sys.exit(1)
 
-    context.trans = trans
-    trans.add_server_key(SSHKeyGen.rsa_key())
+    context.transport = transport
+    transport.add_server_key(SSHKeyGen.rsa_key())
 
     ssh_server = SSHServer(context)
     try:
-        trans.start_server(server=ssh_server)
+        transport.start_server(server=ssh_server)
     except paramiko.SSHException as _ex:
         LOG.error('SSH negotiation failed: %s' % str(_ex))
         client.close()
         sys.exit(1)
 
-    while trans.is_active():
-        channel = trans.accept(timeout=CONF.SSH.timeout)
+    while transport.is_active():
+        channel = transport.accept(timeout=CONF.SSH.timeout)
         if channel is None:
             if not context.channel_list:
                 LOG.error('*** Channel timeout from remote host: %s.' % rhost)
@@ -82,7 +82,7 @@ def SSHBootstrap(client, rhost, ip):
                 try:
                     client.send(b'Connect from %s timeout.' % rhost)
                     client.close()
-                    trans.atfork()
+                    transport.atfork()
                 except:
                     pass
                 sys.exit(1)
@@ -94,7 +94,7 @@ def SSHBootstrap(client, rhost, ip):
             try:
                 client.send(b'Must be shell request.')
                 client.close()
-                trans.atfork()
+                transport.atfork()
             except:
                 pass
             sys.exit(1)
@@ -110,7 +110,7 @@ def SSHBootstrap(client, rhost, ip):
     except:
         pass
     sys.exit(1)
-    LOG.info('*** Client from %s trans.is_active() is false.' % rhost)
+    LOG.info('*** Client from %s transport.is_active() is false.' % rhost)
 
 
 class Relay(Basic):
