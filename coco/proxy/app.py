@@ -195,10 +195,12 @@ class SSHTerminal(object):
             elif index == 1:
                 self.ssh.sendline(password)
             elif index == 2:
-                print ('连接异常, 确认server是否启动.')
+                print ('Connect exception, please check the server '
+                       'whether is started')
                 break
             elif index == 3:
-                print ('连接超时, 确认server是否启动.')
+                print ('Connect timeout, please check the server '
+                       'whether is started.')
                 break
 
             index = self.ssh.expect(
