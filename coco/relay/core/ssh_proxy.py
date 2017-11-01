@@ -58,7 +58,8 @@ class SSHProxy(threading.Thread):
         height = self.context.win_height
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.client_channel.sendall(cm.ws('Connecting to host: %s' % self.ip))
+        self.client_channel.sendall(
+            cm.ws('......Connecting to relay: %s' % self.ip))
         try:
             ssh_client.connect(self.ip, username=self.username,
                                password=self.password, allow_agent=True,

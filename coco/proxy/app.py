@@ -185,25 +185,33 @@ class SSHTerminal(object):
         self.ssh = pexpect.spawn('/bin/bash', ['-c', command])
         self.ssh.logfile = logfile.buffer
         while True:
-            index = self.ssh.expect(['continue', 'password',
-                                     pexpect.EOF, pexpect.TIMEOUT], timeout=3)
+            index = self.ssh.expect(
+                ['continue', 'assword', pexpect.EOF, pexpect.TIMEOUT],
+                timeout=120
+            )
             if index == 0:
                 self.ssh.sendline('yes')
                 continue
             elif index == 1:
                 self.ssh.sendline(password)
+            elif index == 2:
+                print ('连接异常, 确认server是否启动.')
+                break
+            elif index == 3:
+                print ('连接超时, 确认server是否启动.')
+                break
 
             index = self.ssh.expect(
-                ['password', '.*', pexpect.EOF, pexpect.TIMEOUT], timeout=120)
+                ['assword', '.*', pexpect.EOF, pexpect.TIMEOUT], timeout=120)
             if index == 1:
                 signal.signal(signal.SIGWINCH, self.window_change)
                 size = self.get_window_size()
                 self.ssh.setwinsize(size[0], size[1])
-                print ('\033[32;1mconnecting to %s, please wait.\033[0m' % ip)
+                print ('\033[32;1mLogin host %s success!\033[0m' % ip)
                 self.ssh.interact()
                 break
             elif index == 0:
-                print ('Password error.')
+                print ('Password error, please contact system administrator!')
                 break
             else:
                 print ('Login failed, please contact system administrator!')

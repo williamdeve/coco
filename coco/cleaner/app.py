@@ -11,7 +11,18 @@ import subprocess
 from datetime import date, timedelta
 
 import pyte
+from oslo_config import cfg
 from osmo.basic import Basic
+
+CONF = cfg.CONF
+
+record_opts = [
+    cfg.StrOpt('record_path',
+                help='Coco server record operation log info.')
+]
+
+CONF = cfg.CONF
+CONF.register_opts(record_opts, 'RECORD')
 
 
 class SSHIOParser(object):
@@ -24,14 +35,15 @@ class SSHIOParser(object):
 
     def tty_parser(self, data):
         display_list = []
+        if not isinstance(data, bytes):
+            data = data.encode('utf-8', errors='ignore')
         try:
-            if not isinstance(data, bytes):
-                data = data.encode('utf-8', errors='ignore')
             self.stream.feed(data)
-            display_list = [line for line in self.screen.display if line.strip()]
+            display_list = [line
+                            for line in self.screen.display if line.strip()]
             self.screen.reset()
         except Exception as _ex:
-            print ('tty parser error: %s' % str(_ex))
+            print ('** tty parser log error: %s' % str(_ex))
         return display_list
 
     def tty_input_parser(self, data):
@@ -47,26 +59,27 @@ class SSHIOParser(object):
         return '\n'.join(display_list)
 
 
-class TTYParser(Basic):
-    name = 'tty parser'
+class LogCleaner(Basic):
+    name = 'log cleaner'
     version = '0.1'
 
     def __init__(self):
-        super(TTYParser, self).__init__()
+        super(LogCleaner, self).__init__()
         self.io_parser = SSHIOParser()
 
     def run(self):
         pre_day = (date.today() + timedelta(days=-1)).strftime('%Y%m%d')
-        log_path = '/tmp/relay/%s' % pre_day
+        log_path = '%s/%s' % (CONF.RECORD.record_path, pre_day)
+        print ('** will handle log path is: %s' % log_path)
         out = subprocess.check_output(['ls', log_path])
         log_file_list = out.decode('utf-8', errors='ignore').split('\n')
         for log_file in log_file_list:
             if log_file == '':
                 continue
-            self.parser(log_path, log_file)
+            self.cleaner(log_path, log_file)
         print ('** log directory: %s all log file handle finshed.' % pre_day)
 
-    def parser(self, log_path, log_file):
+    def cleaner(self, log_path, log_file):
         log_info = []
         log_file_path = '%s/%s' % (log_path, log_file)
         with open(log_file_path) as fp:
