@@ -169,17 +169,19 @@ class SSHTerminal(object):
         x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
         return struct.unpack('HHHH', x)[0:2]
 
-    def redirect_ssh_proxy(self, username, ip, port=22):
-        """ Use pexpect connect to server
-        """
+    def get_log_file(self, username, ip):
         today = datetime.now().strftime('%Y%m%d')
         log_dir = '%s/%s' % (CONF.RECORD.record_path, today)
         if not os.path.isdir(log_dir):
             os.mkdir(log_dir)
         record_log = '%s/%s_%s_%s.log' % (log_dir, ip, today, username)
         logfile = open(record_log, 'a')
-        logfile.write('\n\n%s\n\n' % time.strftime('%Y%m%d %H%M%S'))
+        return logfile
 
+    def redirect_ssh_proxy(self, username, ip, port=22):
+        """ Use pexpect connect to server
+        """
+        logfile = self.get_log_file(username, ip)
         password = self.cs.get_ldap_pass(username)
         command = 'ssh -p %s %s@%s' % (port, username, ip)
         self.ssh = pexpect.spawn('/bin/bash', ['-c', command])

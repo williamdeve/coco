@@ -46,7 +46,7 @@ class CocoService(object):
         return 'yangjinlong'
 
     def sign(self, data):
-        """ Http interface get or post param sign encrypt mode.
+        """ Http interface GET or POST param sign encrypt mode.
         First, according to key sorted.
         Second, join key value to a string.
         Third, calculate md5 and then put salt calculate md5 again.

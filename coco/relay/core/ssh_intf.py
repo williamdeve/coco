@@ -29,7 +29,8 @@ class SSHServer(paramiko.ServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, public_key):
-        # NOTE(使用密码+OTP方式, 所以不需要使用公钥认证)
+        # NOTE(Because use password + otp authentication, so don't need to
+        #      use the public key certificate)
         return paramiko.AUTH_SUCCESSFUL
 
     def check_channel_request(self, kind, chanid):
