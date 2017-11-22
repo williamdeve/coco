@@ -176,6 +176,8 @@ class SSHTerminal(object):
             os.mkdir(log_dir)
         record_log = '%s/%s_%s_%s.log' % (log_dir, ip, today, username)
         logfile = open(record_log, 'a')
+        logfile.write('\nuser: %s on time: %s login host: %s\n'
+                      % (username, time.strftime('%Y-%m-%d %H:%M:%S'), ip))
         return logfile
 
     def redirect_ssh_proxy(self, username, ip, port=22):
