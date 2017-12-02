@@ -9,9 +9,12 @@ import os
 import threading
 from io import StringIO
 
+import paramiko
+from oslo_log import log as logging
+
 from coco.util.service import CocoService
 
-import paramiko
+LOG = logging.getLogger(__name__)
 
 
 class SSHServer(paramiko.ServerInterface):
@@ -53,6 +56,8 @@ class SSHServer(paramiko.ServerInterface):
         self.context.win_width = self.context.channel.win_width = width
         self.context.win_height = self.context.channel.win_height = height
         self.context.change_win_size_event.set()
+        LOG.debug('*** Interface check channel window change data: (%s, %s).'
+                  % (width, height))
         return True
 
 

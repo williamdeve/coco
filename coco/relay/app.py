@@ -46,9 +46,8 @@ def SignalHandler():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def SSHBootstrap(client, rhost, ip):
+def SSHBootstrap(client, rhost):
     context = DotMap()
-    context.ip = ip
     context.client = client
     context.channel_list = []
     context.remote_host = rhost
@@ -119,7 +118,6 @@ class Relay(Basic):
 
     def __init__(self):
         super(Relay, self).__init__()
-        self.ip = self.local_ip()
         self.host = CONF.SERVER.host
         self.port = CONF.SERVER.port
         self.pool = multiprocessing.Pool(CONF.SERVER.pool_limit, SignalHandler)
@@ -134,7 +132,7 @@ class Relay(Basic):
             LOG.info('Receive client addr: %s:%s' % (rhost, rport))
             cs.setblocking(0)
             try:
-                self.pool.apply_async(SSHBootstrap, (cs, rhost, self.ip))
+                self.pool.apply_async(SSHBootstrap, (cs, rhost))
             except KeyboardInterrupt:
                 self.pool.terminate()
                 self.pool.close()
@@ -153,9 +151,3 @@ class Relay(Basic):
             self.fd.close()
         except:
             pass
-
-    def local_ip(self):
-        hostname = socket.gethostname()
-        fqdn = socket.getfqdn(hostname)
-        ip = socket.gethostbyname(fqdn)
-        return ip
