@@ -17,6 +17,7 @@ from oslo_config import cfg
 from osmo.basic import Basic
 from oslo_log import log as logging
 
+import coco.util.common as cm
 from coco.relay.core.ssh_intf import SSHKeyGen
 from coco.relay.core.ssh_intf import SSHServer
 from coco.relay.core.ssh_proxy import SSHProxy
@@ -56,7 +57,7 @@ def SSHBootstrap(client, rhost):
     try:
         transport.load_server_moduli()
     except:
-        LOG.error('(Failed to load moduli -- gex will be unsupported.)')
+        LOG.error('*** Failed to load moduli -- gex will be unsupported.')
         client.close()
         sys.exit(1)
 
@@ -67,19 +68,22 @@ def SSHBootstrap(client, rhost):
     try:
         transport.start_server(server=ssh_server)
     except paramiko.SSHException as _ex:
-        LOG.error('SSH negotiation failed: %s' % str(_ex))
+        LOG.error('*** Bootstrap ssh start server failed: %s' % str(_ex))
         client.close()
         sys.exit(1)
 
     while transport.is_active():
-        channel = transport.accept(timeout=CONF.SSH.timeout)
-        if channel is None:
+        client_channel = transport.accept(timeout=CONF.SSH.timeout)
+        if client_channel is None:
             if not context.channel_list:
-                LOG.error('*** Channel timeout from remote host: %s.' % rhost)
+                LOG.error('*** Client channel timeout from host: %s.' % rhost)
                 LOG.error('*** First login timeout > %s, so close client.'
                           % CONF.SSH.timeout)
                 try:
                     client.send(b'Connect from %s timeout.' % rhost)
+                    close_data = client.recv(1024)
+                    LOG.info('*** Login timeout receive client close data: %s'
+                             % close_data)
                     client.close()
                     transport.atfork()
                 except:
@@ -92,16 +96,30 @@ def SSHBootstrap(client, rhost):
             LOG.error('*** Client never asked for a shell.')
             try:
                 client.send(b'Must be shell request.')
+                close_data = client.recv(1024)
+                LOG.info('*** Client not use shell receive close data: %s'
+                         % close_data)
                 client.close()
                 transport.atfork()
             except:
                 pass
             sys.exit(1)
-        LOG.info('Client asking for a shell.')
-        context.channel = channel
-        context.channel_list.append(channel)
+        LOG.info('*** Client asking for a shell.')
 
-        proxyer = SSHProxy(context)
+        if (len(context.channel_list) + 1) > cm.SESSION_LIMIT:
+            tip = u'超出session预定上限值! 请使用已打开的窗口, 并关闭该窗口.'
+            client_channel.sendall(cm.ws(tip, 1))
+            close_data = client_channel.recv(1024)
+            LOG.info(b'*** Session over limit, receive data: %s' % close_data)
+            client_channel.close()
+            continue
+
+        # NOTE(channel list 需要多个线程共享, 因为若某个线程(session)
+        # 自动退出，需要将自己自动从该列表剔除)
+        context.channel_list.append(client_channel)
+
+        # NOTE(client channel 不能多线程共享全局变量, 否则session就会乱)
+        proxyer = SSHProxy(context, client_channel)
         proxyer.start()
 
     try:

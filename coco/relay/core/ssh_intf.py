@@ -43,8 +43,8 @@ class SSHServer(paramiko.ServerInterface):
 
     def check_channel_pty_request(self, channel, term, width, height,
                                   pixelwidth, pixelheight, modes):
-        self.context.win_width = self.context.channel.win_width = width
-        self.context.win_height = self.context.channel.win_height = height
+        self.context.win_width = width
+        self.context.win_height = height
         return True
 
     def check_channel_shell_request(self, channel):
@@ -53,8 +53,8 @@ class SSHServer(paramiko.ServerInterface):
 
     def check_channel_window_change_request(self, channel, width, height,
                                             pixelwidth, pixelheight):
-        self.context.win_width = self.context.channel.win_width = width
-        self.context.win_height = self.context.channel.win_height = height
+        self.context.win_width = width
+        self.context.win_height = height
         self.context.change_win_size_event.set()
         LOG.debug('*** Interface check channel window change data: (%s, %s).'
                   % (width, height))

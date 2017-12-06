@@ -52,13 +52,13 @@ CONF.register_opts(ssh_opts, 'SSH')
 
 class SSHProxy(threading.Thread):
 
-    def __init__(self, context):
+    def __init__(self, context, client_channel):
         super(SSHProxy, self).__init__()
         self.context = context
         self.ip = CONF.SSH.local_ssh_ip
         self.port = CONF.SSH.local_ssh_port
         self.username = context.username
-        self.client_channel = context.channel
+        self.client_channel = client_channel
         self.password = CocoService().get_ldap_pass(self.username)
 
     def run(self):
@@ -130,8 +130,8 @@ class SSHProxy(threading.Thread):
 
             if self.context.change_win_size_event.is_set():
                 self.context.change_win_size_event.clear()
-                width = self.client_channel.win_width
-                height = self.client_channel.win_height
+                width = self.context.win_width
+                height = self.context.win_height
                 LOG.debug('*** Proxy fetch change window size (%s, %s).'
                           % (width, height))
                 backend_channel.resize_pty(width=width, height=height)
@@ -162,8 +162,7 @@ class SSHProxy(threading.Thread):
         tips += ('Noting to do, timeout %s seconds, so disconnect.\033[0m'
                  % CONF.IDLE.timeout)
         client_channel.sendall('\r\n' + tips + '\r\n')
-        LOG.warn('** User %s on host %s noting to do timeout disconnect.'
-                 % (self.username, self.ip))
+        LOG.warn('*** User %s on host %s %s' % (self.username, self.ip, tips))
 
     def exception_handle(self, backend_channel):
         if self.client_channel == self.context.channel_list[0]:
@@ -171,9 +170,11 @@ class SSHProxy(threading.Thread):
                 chan.close()
             self.context.transport.atfork()
         else:
-            self.context.channel_list.remove(self.client_channel)
+            if self.client_channel in self.context.channel_list:
+                self.context.channel_list.remove(self.client_channel)
             self.client_channel.close()
-        try:
-            backend_channel.close()
-        except:
-            pass
+        if backend_channel:
+            try:
+                backend_channel.close()
+            except:
+                pass

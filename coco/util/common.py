@@ -5,6 +5,23 @@
 # Author: Jinlong Yang
 #
 
+import hashlib
+from operator import itemgetter
+
+import requests
+from oslo_config import cfg
+from oslo_log import log as logging
+
+LOG = logging.getLogger(__name__)
+
+intf_opts = [
+    cfg.StrOpt('salt',
+               help='coco service interface md5 salt value.'),
+]
+
+CONF = cfg.CONF
+CONF.register_opts(intf_opts, 'INTF')
+
 PROMPT = 'Opt> '
 
 SESSION_LIMIT = 10
@@ -70,3 +87,63 @@ def wc(s, has_bg=True):
         return '\033[1;30;41m' + s + '\033[0m'
     else:
         return '\033[1;31m' + s + '\033[0m'
+
+
+def parameter_sign(data):
+    """ Interface request parameters sign calculate method.
+
+    Signature calculation process is as follows:
+    1. according the "key" to sorted
+    2. stitching "key" and "value" to a string, and calculate the md5
+    3. use the second step of "md5" add "salt" work out new md5.
+
+    origin data:
+    >>> data = {'name': 'yy', 'age': 18}
+
+    calculate origin data's signature:
+    >>> new_data = {'age': 18, 'name': 'yy'}
+    >>> origin_data = 'age18nameyy'
+    >>> encrypt_data = hashlib.md5(origin_data.encode()).hexdigest()
+    >>> new_data = (encrypt_data+CONF.INTF.salt).encode()
+    >>> sign = hashlib.md5(new_data).hexdigest().upper()
+    >>> return sign
+    """
+    new_data = sorted(data.items(), key=itemgetter(0))
+    origin_data = ''
+    for item in new_data:
+        origin_data += str(item[0])
+        origin_data += str(item[1])
+    encrypt_data = hashlib.md5(origin_data.encode()).hexdigest()
+    return hashlib.md5(
+        (encrypt_data+CONF.INTF.salt).encode()).hexdigest().upper()
+
+
+def http_handler(url, payload, http_type='GET'):
+    """ Use ``requests`` library handle http get or post request.
+
+    URL interface return value is json object. such as:
+    {'errcode': 0/1, 'errmsg': 'xxxx', data: []/{}/value}
+
+
+    :returns: data list or dict or concrete value if request is success.
+              or ``None``
+    """
+    try:
+        if http_type == 'POST':
+            resp = requests.post(url, data=payload)
+        else:
+            resp = requests.get(url, params=payload)
+    except Exception as _ex:
+        LOG.error('*** Request %s eception: %s' % (http_type, str(_ex)))
+        return None
+    status_code = resp.status_code
+    if status_code != 200:
+        LOG.error('*** Request %s http code: %s' % (http_type, status_code))
+        return None
+    ret_info = resp.json()
+    errcode = ret_info.get('errcode')
+    if errcode != 0:
+        errmsg = ret_info.get('errmsg')
+        LOG.warn('*** Request intf: %s data failed: %s' % (url, errmsg))
+        return None
+    return ret_info.get('data')
