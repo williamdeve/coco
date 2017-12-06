@@ -25,8 +25,8 @@ class SSHServer(paramiko.ServerInterface):
         context.change_win_size_event = threading.Event()
 
     def check_auth_password(self, username, password):
-        ts = CocoService()
-        if ts.validate(username, password):
+        cs = CocoService()
+        if cs.validate(username, password):
             self.context.username = username
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
