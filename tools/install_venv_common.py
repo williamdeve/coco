@@ -177,4 +177,3 @@ class Fedora(Distro):
             self.die("Please install 'python-virtualenv'.")
 
         super(Fedora, self).install_virtualenv()
-
