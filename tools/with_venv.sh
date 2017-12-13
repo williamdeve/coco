@@ -11,3 +11,4 @@ else
     export PYTHONPATH=$APP_PATH:$PYTHONPATH
 fi
 source ${VENV}/bin/activate && "$@"
+

@@ -12,8 +12,8 @@ Coco
 
     * virtualenv 默认为python3对应的版本
 
-        # ll /usr/bin/virtualenv
-        lrwxrwxrwx 1 root root 33 Dec  8 18:09 /usr/bin/virtualenv -> /usr/local/python3/bin/virtualenv
+      # ll /usr/bin/virtualenv
+      lrwxrwxrwx 1 root root 33 Dec  8 18:09 /usr/bin/virtualenv -> /usr/local/python3/bin/virtualenv
 
 
 ## 安装
