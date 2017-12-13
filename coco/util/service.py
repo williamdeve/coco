@@ -43,6 +43,16 @@ class CocoService(object):
         return True
 
     def get_user_asset(self, username):
+        """ To obtain a list of user authorization machine.
+
+        Return machine list format as follows:
+        [
+            DotMap({'id': 1, 'ip': '10.10.1.1', 'port': 22, 'hostname': '1x'}),
+            DotMap({'id': 2, 'ip': '10.10.1.2', 'port': 22, 'hostname': '2x'}),
+            .....
+        ]
+        """
+        asset_list = []
         url = CONF.INTF.user_asset_intf
         payload = {
             'username': username
@@ -50,6 +60,8 @@ class CocoService(object):
         sign = cm.parameter_sign(payload)
         payload['sign'] = sign
         assets = cm.http_handler(url, payload, 'POST')
+        if assets is None:
+            return asset_list
         asset_list = [DotMap(item) for item in assets if item]
         return asset_list
 
@@ -60,5 +72,5 @@ class CocoService(object):
         }
         sign = cm.parameter_sign(payload)
         payload['sign'] = sign
-        ret = cm.http_handler(url, payload, 'POST')
-        return ret
+        password = cm.http_handler(url, payload, 'POST')
+        return password

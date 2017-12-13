@@ -37,12 +37,12 @@ CONF = cfg.CONF
 CONF.register_opts(record_opts, 'RECORD')
 
 
-class Proxy(Basic):
-    name = 'proxy'
+class Bastion(Basic):
+    name = 'bastion'
     version = '0.1'
 
     def __init__(self):
-        super(Proxy, self).__init__()
+        super(Bastion, self).__init__()
         self.username = getpass.getuser()
         self.user_info = UserHostInfo(self.username)
         self.terminal = SSHTerminal()
@@ -103,7 +103,8 @@ class Proxy(Basic):
             search_result = self.user_info.search_host(option)
             if len(search_result) == 1:
                 self.terminal.redirect_ssh_proxy(self.username,
-                                                 search_result[0].ip)
+                                                 search_result[0].ip,
+                                                 search_result[0].port)
             elif len(search_result) == 0:
                 print (cm.ws('No host match, please input again.',
                              level='warn'))

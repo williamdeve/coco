@@ -5,7 +5,7 @@
 # Author: Jinlong Yang
 #
 
-from coco.proxy.app import Proxy
+from coco.bastion.app import Bastion
 
-app = Proxy()
-proxy = app.entry_point()
+app = Bastion()
+bastion = app.entry_point()
